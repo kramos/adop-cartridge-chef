@@ -72,10 +72,9 @@ cookbookPackage.with{
     }
   }
   steps {
-    maven{
-      goals('clean install -DskipTests')
-      mavenInstallation("ADOP Maven")
-    }
+     shell('''set +x
+            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
+            |set -x'''.stripMargin()) 
   }
   publishers{
     archiveArtifacts("**/*")
@@ -92,7 +91,7 @@ cookbookPackage.with{
 }
 
 chefSanityTest.with{
-  description("This job runs unit tests on Java Spring reference application.")
+  description("This job runs sanity tests of the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Cookbook_Package","Parent build name")
@@ -109,17 +108,14 @@ chefSanityTest.with{
   }
   label("java8")
   steps {
-  }
-  steps {
     copyArtifacts("Cookbook_Package") {
         buildSelector {
           buildNumber('${B}')
       }
     }
-    maven{
-      goals('clean test')
-      mavenInstallation("ADOP Maven")
-    }
+    shell('''set +x
+            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
+            |set -x'''.stripMargin())
   }
   publishers{
     downstreamParameterized{
@@ -135,7 +131,7 @@ chefSanityTest.with{
 }
 
 chefUnitTest.with{
-  description("This job runs code quality analysis for Java reference application using SonarQube.")
+  description("This job runs unit tests of the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Cookbook_Package","Parent build name")
@@ -157,21 +153,9 @@ chefUnitTest.with{
           buildNumber('${B}')
       }
     }
-  }
-  configure { myProject ->
-    myProject / builders << 'hudson.plugins.sonar.SonarRunnerBuilder'(plugin:"sonar@2.2.1"){
-      project('sonar-project.properties')
-      properties('''sonar.projectKey=org.java.reference-application
-sonar.projectName=Reference application
-sonar.projectVersion=1.0.0
-sonar.sources=src
-sonar.language=java
-sonar.sourceEncoding=UTF-8
-sonar.scm.enabled=false''')
-      javaOpts()
-      jdk('(Inherit From Job)')
-      task()
-    }
+    shell('''set +x
+            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
+            |set -x'''.stripMargin())
   }
   publishers{
     downstreamParameterized{
@@ -187,7 +171,7 @@ sonar.scm.enabled=false''')
 }
 
 chefConvergeTest.with{
-  description("This job deploys the java reference application to the CI environment")
+  description("This job tests a converge with the cookbook")
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Cookbook_Package","Parent build name")
@@ -211,24 +195,6 @@ chefConvergeTest.with{
       }
     }
     shell('''set +x
-            |export SERVICE_NAME="$(echo ${PROJECT_NAME} | tr '/' '_')_${ENVIRONMENT_NAME}"
-            |docker cp ${WORKSPACE}/target/petclinic.war  ${SERVICE_NAME}:/usr/local/tomcat/webapps/
-            |docker restart ${SERVICE_NAME}
-            |COUNT=1
-            |while ! curl -q http://${SERVICE_NAME}:8080/petclinic -o /dev/null 
-            |do
-            |  if [ ${COUNT} -gt 10 ]; then
-            |      echo "Docker build failed even after ${COUNT}. Please investigate."
-            |      exit 1
-            |  fi
-            |  echo "Application is not up yet. Retrying ..Attempt (${COUNT})"
-            |  sleep 5  
-            |  COUNT=$((COUNT+1))
-            |done
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
-            |echo "Environment URL (replace PUBLIC_IP with your public ip address where you access jenkins from) : http://${SERVICE_NAME}.PUBLIC_IP.xip.io/petclinic"
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
             |echo "=.=.=.=.=.=.=.=.=.=.=.=."
             |set -x'''.stripMargin())
   }
@@ -247,20 +213,11 @@ chefConvergeTest.with{
 }
 
 chefPromoteNonProdChefServer.with{
-  description("This job runs regression tests on deployed java application")
+  description("This job uploads the cookbook to the non-production Chef Server")
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Cookbook_Package","Parent build name")
     stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
-  }
-  scm{
-    git{
-      remote{
-        url(regressionTestGitUrl)
-        credentials("adop-jenkins-master")
-      }
-      branch("*/master")
-    }
   }
   wrappers {
     preBuildCleanup()
@@ -275,31 +232,9 @@ chefPromoteNonProdChefServer.with{
   label("java8")
   steps {
     shell('''set +x
-            |export SERVICE_NAME="$(echo ${PROJECT_NAME} | tr '/' '_')_${ENVIRONMENT_NAME}"
-            |echo "SERVICE_NAME=${SERVICE_NAME}" > env.properties
+            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
             |set -x'''.stripMargin())
-    environmentVariables {
-      propertiesFile('env.properties')
-    }
-    maven{
-      goals('clean test -B -DPETCLINIC_URL=http://${SERVICE_NAME}:8080/petclinic')
-      mavenInstallation("ADOP Maven")
-    }
   }
-  configure{myProject ->
-    myProject / 'publishers' << 'net.masterthought.jenkins.CucumberReportPublisher'(plugin:'cucumber-reports@0.1.0'){
-      jsonReportDirectory("")
-      pluginUrlPath("")
-      fileIncludePattern("")
-      fileExcludePattern("")
-      skippedFails("false")
-      pendingFails("false")
-      undefinedFails("false")
-      missingFails("false")
-      noFlashCharts("false")
-      ignoreFailedTests("false")
-      parallelTesting("false")
-    }
-  }
+
 }
 
