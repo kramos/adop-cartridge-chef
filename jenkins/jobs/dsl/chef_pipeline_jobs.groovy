@@ -79,7 +79,7 @@ chefGetCookboks.with{
   publishers{
     archiveArtifacts("**/*")
     downstreamParameterized{
-      trigger(projectFolderName + "/Unit_Test"){
+      trigger(projectFolderName + "/Sanity_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
           predefinedProp("B",'${BUILD_NUMBER}')
@@ -90,7 +90,7 @@ chefGetCookboks.with{
   }
 }
 
-chefUnitTest.with{
+chefSanityTest.with{
   description("This job runs sanity checks on the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
@@ -122,13 +122,14 @@ chefUnitTest.with{
           buildNumber('${B}')
       }
     }
-    shell('''set +x
+    shell('''set -x
+            |chmod +x ./ChefCI/chef_sanity_test.sh
             |./ChefCI/chef_sanity_test.sh
             |set -x'''.stripMargin())
   }
   publishers{
     downstreamParameterized{
-      trigger(projectFolderName + "/Converge_Test"){
+      trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
           predefinedProp("B",'${B}')
@@ -141,7 +142,7 @@ chefUnitTest.with{
 }
 
 
-chefSanityTest.with{
+chefUnitTest.with{
   description("This job runs sanity tests of the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
