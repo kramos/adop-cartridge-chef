@@ -123,7 +123,7 @@ chefUnitTest.with{
       }
     }
     shell('''set +x
-            |chef_sanity_test.sh
+            |./ChefCi/chef_sanity_test.sh
             |set -x'''.stripMargin())
   }
   publishers{
