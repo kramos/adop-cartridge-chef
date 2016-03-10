@@ -38,13 +38,8 @@ chefSanityTest.with{
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
   }
-  label("java8")
+  label("docker")
   steps {
-    copyArtifacts("Sanity_Test") {
-        buildSelector {
-          buildNumber('${B}')
-      }
-    }
     shell('''set +x
             |IGNORE="(jpg$|gif$|png$|gd2$|jar$|swp$|war$)"
             |LOG=dosfiles.txt
