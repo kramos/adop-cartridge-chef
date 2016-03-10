@@ -82,8 +82,8 @@ chefGetCookboks.with{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
-          predefinedProp("B",'${BUIILD_NUMBER}')
-          predefinedProp("PARENT_BUILD",'${PARENT_BUILD}')
+          predefinedProp("B",${BUIILD_NUMBER})
+          predefinedProp("PARENT_BUILD",${PARENT_BUILD})
         }
       }
     }
@@ -117,7 +117,7 @@ chefUnitTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts('Get_Cookbooks') {
+    copyArtifacts('${PARENT_BUILD}') {
         buildSelector {
           buildNumber('${B}')
       }
@@ -132,8 +132,8 @@ chefUnitTest.with{
         condition("UNSTABLE_OR_BETTER")
         parameters{
           predefinedProp("B",'${B}')
-          predefinedProp("S",'${BUIILD_NUMBER}')
           predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
+          predefinedProp("S",'${BUIILD_NUMBER}')
         }
       }
     }
