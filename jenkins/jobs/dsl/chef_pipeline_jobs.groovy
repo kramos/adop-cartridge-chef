@@ -83,7 +83,7 @@ chefGetCookboks.with{
         condition("UNSTABLE_OR_BETTER")
         parameters{
           predefinedProp("B","${BUILD_NUMBER}")
-          predefinedProp("PARENT_BUILD","${PARENT_BUILD}")
+          predefinedProp("PARENT_BUILD","${JOB_NAME}")
         }
       }
     }
