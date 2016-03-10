@@ -117,13 +117,13 @@ chefUnitTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts('${PARENT_BUILD}') {
+    copyArtifacts('Get_Cookbooks') {
         buildSelector {
           buildNumber('${B}')
       }
     }
     shell('''set +x
-            |./ChefCi/chef_sanity_test.sh
+            |./ChefCI/chef_sanity_test.sh
             |set -x'''.stripMargin())
   }
   publishers{
