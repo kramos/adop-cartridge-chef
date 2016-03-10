@@ -27,16 +27,47 @@ pipelineView.with{
 }
 
 chefSanityTest.with{
-  description("This job runs sanity tests of the cookbook.")
+  description("This job download the cookbook and runs sanity tests.")
   wrappers {
     preBuildCleanup()
     injectPasswords()
     maskPasswords()
     sshAgent("adop-jenkins-master")
   }
+  scm{
+    git{
+      remote{
+        url(referenceAppGitUrl)
+        credentials("adop-jenkins-master")
+      }
+      branch("*/master")
+    }
+  }
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
+  }
+  triggers{
+    gerrit{
+      events{
+        refUpdated()
+      }
+      configure { gerritxml ->
+        gerritxml / 'gerritProjects' {
+          'com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject' {
+            compareType("PLAIN")
+            pattern(projectFolderName + "/" + referenceAppgitRepo)
+            'branches' {
+              'com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch' {
+                compareType("PLAIN")
+                pattern("master")
+              }
+            }
+          }
+        }
+        gerritxml / serverName("ADOP Gerrit")
+      }
+    }
   }
   label("docker")
   steps {
