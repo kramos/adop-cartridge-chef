@@ -82,8 +82,8 @@ chefGetCookboks.with{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
-          predefinedProp("B",${BUIILD_NUMBER})
-          predefinedProp("PARENT_BUILD",${PARENT_BUILD})
+          predefinedProp("B","${BUIILD_NUMBER}")
+          predefinedProp("PARENT_BUILD","${PARENT_BUILD}")
         }
       }
     }
