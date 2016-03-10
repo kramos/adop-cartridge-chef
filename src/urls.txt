@@ -1,1 +1,2 @@
 https://github.com/kramos/vim.git
+https://github.com/kramos/adop-cartridge-chef-scripts.git

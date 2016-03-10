@@ -5,10 +5,11 @@ def projectFolderName = "${PROJECT_NAME}"
 // Variables
 def referenceAppgitRepo = "vim"
 def referenceAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + referenceAppgitRepo
-//def regressionTestGitRepo = "adop-cartridge-java-regression-tests"
-//def regressionTestGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + regressionTestGitRepo
+def chefUtilsRepo = "adop-cartridge-chef-scripts"
+def chefUtilsGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + chefUtilsRepo 
 
 // Jobs
+def chefGetCookboks = freeStyleJob(projectFolderName + "/Get_Cookbooks")
 def chefSanityTest = freeStyleJob(projectFolderName + "/Sanity_Test")
 def chefUnitTest = freeStyleJob(projectFolderName + "/Unit_Test")
 def chefConvergeTest = freeStyleJob(projectFolderName + "/Converge_Test")
@@ -20,14 +21,14 @@ def pipelineView = buildPipelineView(projectFolderName + "/Chef_Pipeline")
 pipelineView.with{
     title('Chef Pipeline')
     displayedBuilds(5)
-    selectedJob(projectFolderName + "/Sanity_Test")
+    selectedJob(projectFolderName + "/Get_Cookbooks")
     showPipelineParameters()
     showPipelineDefinitionHeader()
     refreshFrequency(5)
 }
 
-chefSanityTest.with{
-  description("This job download the cookbook and runs sanity tests.")
+chefGetCookboks.with{
+  description("This job download the cookbook.")
   wrappers {
     preBuildCleanup()
     injectPasswords()
@@ -72,24 +73,7 @@ chefSanityTest.with{
   label("docker")
   steps {
     shell('''set +x
-            |IGNORE="(jpg$|gif$|png$|gd2$|jar$|swp$|war$)"
-            |LOG=dosfiles.txt
-            |EXIT_CODE=0
-            |grep -rl $'\r' * | egrep -v $IGNORE | tee $LOG
-            |if [ -s $LOG ]
-            |then
-            |  echo "CrLf, windows line endings found!"
-            |  echo "Converting Windows files to unix"
-            |  cat dosfiles.txt | while read LINE
-            |  do
-            |        dos2unix ${LINE}
-            |        # Clean up log so that this is not uploaded to knife server
-            |        rm -rf $LOG
-            |  done
-            |else
-            |  echo "No Windows files found!"
-            |fi
-            |docker run --rm -v `pwd`:/cookbook foodcritic /cookbook -f any --tags ~FC015 --tags ~FC003 --tags ~FC023 --tags ~FC041 --tags ~FC034 -X spec
+            |echo
             |set -x'''.stripMargin())
   }
   publishers{
@@ -97,7 +81,7 @@ chefSanityTest.with{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
-          predefinedProp("B",'${B}')
+          predefinedProp("B",'${BUIILD_NUMBER}')
           predefinedProp("PARENT_BUILD",'${PARENT_BUILD}')
         }
       }
@@ -106,10 +90,62 @@ chefSanityTest.with{
 }
 
 chefUnitTest.with{
-  description("This job runs unit tests of the cookbook.")
+  description("This job runs sanity checks on the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
-    stringParam("PARENT_BUILD","Sanity_Test","Parent build name")
+    stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
+  }
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  scm{
+    git{
+      remote{
+        url(chefUtilsGitUrl)
+        credentials("adop-jenkins-master")
+      }
+      branch("*/master")
+    }
+  }
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  label("docker")
+  steps {
+    copyArtifacts('Get_Cookbooks') {
+        buildSelector {
+          buildNumber('${B}')
+      }
+    }
+    shell('''set +x
+            |chef_sanity_test.sh
+            |set -x'''.stripMargin())
+  }
+  publishers{
+    downstreamParameterized{
+      trigger(projectFolderName + "/Converge_Test"){
+        condition("UNSTABLE_OR_BETTER")
+        parameters{
+          predefinedProp("B",'${B}')
+          predefinedProp("S",'${BUIILD_NUMBER}')
+          predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
+        }
+      }
+    }
+  }
+}
+
+
+chefSanityTest.with{
+  description("This job runs sanity tests of the cookbook.")
+  parameters{
+    stringParam("B",'',"Parent build number")
+    stringParam("S",'',"Sanity build number")
+    stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
   }
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
@@ -121,8 +157,13 @@ chefUnitTest.with{
     maskPasswords()
     sshAgent("adop-jenkins-master")
   }
-  label("java8")
+  label("docker")
   steps {
+    copyArtifacts('Get_Cookbooks') {
+        buildSelector {
+          buildNumber('${B}')
+      }
+    }
     copyArtifacts('Sanity_Test') {
         buildSelector {
           buildNumber('${B}')
@@ -149,7 +190,7 @@ chefConvergeTest.with{
   description("This job tests a converge with the cookbook")
   parameters{
     stringParam("B",'',"Parent build number")
-    stringParam("PARENT_BUILD","Sanity_Test","Parent build name")
+    stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
     stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
   }
   wrappers {
@@ -164,7 +205,7 @@ chefConvergeTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts("Sanity_Test") {
+    copyArtifacts("Get_Cookbooks") {
         buildSelector {
           buildNumber('${B}')
       }
@@ -191,7 +232,7 @@ chefPromoteNonProdChefServer.with{
   description("This job uploads the cookbook to the non-production Chef Server")
   parameters{
     stringParam("B",'',"Parent build number")
-    stringParam("PARENT_BUILD","Sanity_Test","Parent build name")
+    stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
     stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
   }
   wrappers {
@@ -204,7 +245,7 @@ chefPromoteNonProdChefServer.with{
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
   }
-  label("java8")
+  label("docker")
   steps {
     shell('''set +x
             |echo "=.=.=.=.=.=.=.=.=.=.=.=."
