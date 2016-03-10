@@ -28,7 +28,7 @@ pipelineView.with{
 }
 
 chefGetCookboks.with{
-  description("This job download the cookbook.")
+  description("This job downloads the cookbook.")
   wrappers {
     preBuildCleanup()
     injectPasswords()
@@ -77,6 +77,7 @@ chefGetCookboks.with{
             |set -x'''.stripMargin())
   }
   publishers{
+    archiveArtifacts("**/*")
     downstreamParameterized{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
