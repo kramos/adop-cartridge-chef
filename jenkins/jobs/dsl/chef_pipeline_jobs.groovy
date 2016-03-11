@@ -117,7 +117,7 @@ chefSanityTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts('Get_Cookbooks') {
+    copyArtifacts('Sanity_Test') {
         buildSelector {
           buildNumber('${B}')
       }
@@ -132,9 +132,8 @@ chefSanityTest.with{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
-          predefinedProp("B",'${B}')
-          predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
-          predefinedProp("S",'${BUIILD_NUMBER}')
+          predefinedProp("B",'${BUILD_NUMBER}')
+          predefinedProp("PARENT_BUILD", '${JOB_NAME}')
         }
       }
     }
@@ -146,8 +145,7 @@ chefUnitTest.with{
   description("This job runs sanity tests of the cookbook.")
   parameters{
     stringParam("B",'',"Parent build number")
-    stringParam("S",'',"Sanity build number")
-    stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
+    stringParam("PARENT_BUILD","Sanity_Test","Parent build name")
   }
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
@@ -161,15 +159,11 @@ chefUnitTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts('Get_Cookbooks') {
-        buildSelector {
-          buildNumber('${B}')
-      }
-    }
     copyArtifacts('Sanity_Test') {
         buildSelector {
           buildNumber('${B}')
       }
+    }
     }
     shell('''set -x
             |docker run --rm -v jenkins_slave_home:/jenkins_slave_home/ kramos/adop-chef-test /jenkins_slave_home/$JOB_NAME/ChefCI/chef_unit_test.sh /jenkins_slave_home/$JOB_NAME/
@@ -193,7 +187,6 @@ chefConvergeTest.with{
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
-    stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
   }
   wrappers {
     preBuildCleanup()
@@ -210,7 +203,7 @@ chefConvergeTest.with{
     shell('''set +x
             |echo TODO clean up
             |'''.stripMargin())
-    copyArtifacts("Get_Cookbooks") {
+    copyArtifacts("Sanity_Test") {
         buildSelector {
           buildNumber('${B}')
       }
@@ -226,7 +219,6 @@ chefConvergeTest.with{
         parameters{
           predefinedProp("B",'${B}')
           predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
-          predefinedProp("ENVIRONMENT_NAME", '${ENVIRONMENT_NAME}')
         }
       }
     }
@@ -238,7 +230,6 @@ chefPromoteNonProdChefServer.with{
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Get_Cookbooks","Parent build name")
-    stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
   }
   wrappers {
     preBuildCleanup()
