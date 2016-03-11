@@ -124,9 +124,10 @@ chefSanityTest.with{
     }
     shell('''set -x
             |docker run --rm -v jenkins_slave_home:/jenkins_slave_home/ kramos/adop-chef-test /jenkins_slave_home/$JOB_NAME/ChefCI/chef_sanity_test.sh /jenkins_slave_home/$JOB_NAME/
-            |set -x'''.stripMargin())
+            |'''.stripMargin())
   }
   publishers{
+    archiveArtifacts("ChefCI/**/*")
     downstreamParameterized{
       trigger(projectFolderName + "/Unit_Test"){
         condition("UNSTABLE_OR_BETTER")
@@ -170,9 +171,9 @@ chefUnitTest.with{
           buildNumber('${B}')
       }
     }
-    shell('''set +x
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
-            |set -x'''.stripMargin())
+    shell('''set -x
+            |docker run --rm -v jenkins_slave_home:/jenkins_slave_home/ kramos/adop-chef-test /jenkins_slave_home/$JOB_NAME/ChefCI/chef_unit_test.sh /jenkins_slave_home/$JOB_NAME/
+            |'''.stripMargin())
   }
   publishers{
     downstreamParameterized{
@@ -206,14 +207,17 @@ chefConvergeTest.with{
   }
   label("docker")
   steps {
+    shell('''set +x
+            |echo TODO clean up
+            |'''.stripMargin())
     copyArtifacts("Get_Cookbooks") {
         buildSelector {
           buildNumber('${B}')
       }
     }
     shell('''set +x
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
-            |set -x'''.stripMargin())
+            |echo TODO run kitchen
+            |'''.stripMargin())
   }
   publishers{
     downstreamParameterized{
@@ -249,7 +253,7 @@ chefPromoteNonProdChefServer.with{
   label("docker")
   steps {
     shell('''set +x
-            |echo "=.=.=.=.=.=.=.=.=.=.=.=."
+            |echo TODO converge 
             |set -x'''.stripMargin())
   }
 
