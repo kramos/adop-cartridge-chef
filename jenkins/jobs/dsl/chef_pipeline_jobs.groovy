@@ -117,7 +117,7 @@ chefSanityTest.with{
   }
   label("docker")
   steps {
-    copyArtifacts('Sanity_Test') {
+    copyArtifacts('Get_Cookbooks') {
         buildSelector {
           buildNumber('${B}')
       }
