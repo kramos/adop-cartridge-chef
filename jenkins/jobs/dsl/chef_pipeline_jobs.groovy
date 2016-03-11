@@ -124,10 +124,7 @@ chefSanityTest.with{
     }
     shell('''set -x
             |chmod +x ./ChefCI/chef_sanity_test.sh
-            |docker run --rm \
-            |		-v jenkins_slave_home:/jenkins_slave_home/ \
-            |            kramos/adop-chef-test \
-            |            /jenkins_slave_home/$JOB_NAME/ChefCI/chef_sanity_test.sh /jenkins_slave_home/$JOB_NAME/
+            |docker run --rm -v jenkins_slave_home:/jenkins_slave_home/ kramos/adop-chef-test /jenkins_slave_home/$JOB_NAME/ChefCI/chef_sanity_test.sh /jenkins_slave_home/$JOB_NAME/
             |set -x'''.stripMargin())
   }
   publishers{
