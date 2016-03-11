@@ -8,21 +8,23 @@ This cartridge consists of source code repositories and jenkins jobs.
 
 Cartrige loads the source code repositories
 
-* [spring-petclinic](https://github.com/spring-projects/spring-petclinic.git)
-* [adop-cartridge-java-regression-tests](https://github.com/Accenture/adop-cartridge-java-regression-tests)
-* [adop-cartridge-java-environment-template](https://github.com/Accenture/adop-cartridge-java-environment-template)
+
+* [Sample cookbook - VIM](https://github.com/kramos/vim.git)
+* [Scripts used by this cartridge - adop-cartridge-chef-scripts](https://github.com/kramos/adop-cartridge-chef-scripts.git)
 
 ## Jenkins Jobs
 
 This cartridge generates the jenkins jobs and pipeline views to -
 
-* Provision the environment.
-* Build the source code from sprint petclinic repository.
-* Running unit tests on the compiled code.
-* Running sonar analysis on the code.
-* Deploy to an environment.
-* Run regression tests on deployed petclinic application.
+* Detect cookbook changes 
+* Perform sanity checks and static code analysis 
+* Run unit tests
+* TODO: check for missing cookbook dependencies  
+* TODO: check version has been bumped
+* TODO: Kitchen converge
+* TODO: Put to a Chef server
 
+* TODO: provision a Chef server in ADOP
 
 # License
 Please view [license information](LICENSE.md) for the software contained on this image.
