@@ -164,7 +164,6 @@ chefUnitTest.with{
           buildNumber('${B}')
       }
     }
-    }
     shell('''set -x
             |docker run --rm -v jenkins_slave_home:/jenkins_slave_home/ kramos/adop-chef-test /jenkins_slave_home/$JOB_NAME/ChefCI/chef_unit_test.sh /jenkins_slave_home/$JOB_NAME/
             |'''.stripMargin())
